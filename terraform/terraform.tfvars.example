@@ -1,0 +1,10 @@
+# Copia este archivo como terraform.tfvars y ajusta si hace falta.
+prefijo           = "mensajeria"
+region            = "us-east-1"
+perfil_identidad  = "cuenta-identidad"
+perfil_mensajeria = "cuenta-mensajeria"
+perfil_datos      = "cuenta-datos"
+
+# true  = los usuarios quedan confirmados al registrarse (recomendado en Learner Lab)
+# false = Cognito manda un código por email que hay que confirmar
+auto_confirmar_usuarios = true

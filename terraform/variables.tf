@@ -1,0 +1,46 @@
+variable "prefijo" {
+  description = "Prefijo para nombrar todos los recursos."
+  type        = string
+  default     = "mensajeria"
+}
+
+variable "region" {
+  description = "Región de AWS (Learner Lab permite us-east-1 o us-west-2)."
+  type        = string
+  default     = "us-east-1"
+
+  validation {
+    condition     = contains(["us-east-1", "us-west-2"], var.region)
+    error_message = "Learner Lab solo permite us-east-1 o us-west-2."
+  }
+}
+
+variable "perfil_identidad" {
+  description = "Perfil de AWS CLI de la cuenta 1 (Cognito)."
+  type        = string
+  default     = "cuenta-identidad"
+}
+
+variable "perfil_mensajeria" {
+  description = "Perfil de AWS CLI de la cuenta 2 (APIs, Lambdas, SQS)."
+  type        = string
+  default     = "cuenta-mensajeria"
+}
+
+variable "perfil_datos" {
+  description = "Perfil de AWS CLI de la cuenta 3 (DynamoDB)."
+  type        = string
+  default     = "cuenta-datos"
+}
+
+variable "lab_role_name" {
+  description = "Rol que Learner Lab ya trae creado en cada cuenta. No se pueden crear roles propios."
+  type        = string
+  default     = "LabRole"
+}
+
+variable "auto_confirmar_usuarios" {
+  description = "Si es true, Cognito confirma a los usuarios sin código por email (útil en el laboratorio)."
+  type        = bool
+  default     = true
+}

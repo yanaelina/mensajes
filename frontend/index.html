@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mensajería AWS</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; background: #f5f5f5; color: #222; }
+  section { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  input, button { padding: 8px; margin: 4px 0; font-size: 14px; }
+  button { cursor: pointer; }
+  #app { display: none; }
+  #chats li { cursor: pointer; padding: 4px; }
+  #chats li.activo { background: #dbeafe; }
+  #mensajes { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 8px; background: #fafafa; }
+  .msg { margin: 4px 0; } .mio { text-align: right; color: #1d4ed8; }
+  #log { font-size: 12px; color: #666; white-space: pre-wrap; }
+  .fila { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<h1>Mensajería en 3 cuentas AWS</h1>
+
+<section id="auth">
+  <h2>1. Cuenta (Cognito, cuenta 1)</h2>
+  <div class="fila">
+    <input id="email" type="email" placeholder="email">
+    <input id="password" type="password" placeholder="contraseña (8+, minúscula y número)">
+    <input id="nombre" placeholder="nombre (solo registro)">
+  </div>
+  <button onclick="registrarse()">Registrarme</button>
+  <button onclick="iniciarSesion()">Iniciar sesión</button>
+</section>
+
+<section id="app">
+  <h2>2. Chats (API HTTP, cuenta 2 → datos en cuenta 3)</h2>
+  <p>Conectado como <b id="yo"></b> · WebSocket: <span id="estadoWs">desconectado</span></p>
+  <div class="fila">
+    <input id="nombreChat" placeholder="nombre del chat">
+    <input id="emailsChat" placeholder="emails separados por coma">
+    <button onclick="crearChat()">Crear chat</button>
+  </div>
+  <ul id="chats"></ul>
+  <h3 id="tituloChat">Selecciona un chat</h3>
+  <div id="mensajes"></div>
+  <div class="fila">
+    <input id="texto" placeholder="Escribe un mensaje" style="flex:1" onkeydown="if(event.key==='Enter')enviar()">
+    <button onclick="enviar()">Enviar</button>
+  </div>
+</section>
+
+<section><b>Log</b><div id="log"></div></section>
+
+<script>
+const C = window.CONFIG;
+let tokens = null, yo = null, ws = null, chatActual = null;
+const $ = (id) => document.getElementById(id);
+const log = (t) => { $("log").textContent = new Date().toLocaleTimeString() + "  " + t + "\n" + $("log").textContent; };
+
+// --- Cognito: se llama directo a su API pública (no hace falta SDK) ---
+async function cognito(accion, cuerpo) {
+  const r = await fetch(`https://cognito-idp.${C.region}.amazonaws.com/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-amz-json-1.1", "X-Amz-Target": `AWSCognitoIdentityProviderService.${accion}` },
+    body: JSON.stringify(cuerpo),
+  });
+  const datos = await r.json();
+  if (!r.ok) throw new Error(datos.message || datos.__type);
+  return datos;
+}
+
+async function registrarse() {
+  try {
+    await cognito("SignUp", {
+      ClientId: C.clientId, Username: $("email").value, Password: $("password").value,
+      UserAttributes: [{ Name: "email", Value: $("email").value }, { Name: "name", Value: $("nombre").value || $("email").value }],
+    });
+    log("Registrado. Ahora inicia sesión.");
+  } catch (e) { log("Error al registrar: " + e.message); }
+}
+
+async function iniciarSesion() {
+  try {
+    const r = await cognito("InitiateAuth", {
+      ClientId: C.clientId, AuthFlow: "USER_PASSWORD_AUTH",
+      AuthParameters: { USERNAME: $("email").value, PASSWORD: $("password").value },
+    });
+    tokens = r.AuthenticationResult;
+    yo = await api("PUT", "/yo", { email: $("email").value, nombre: $("nombre").value || undefined });
+    $("yo").textContent = `${yo.nombre} (${yo.email})`;
+    $("auth").style.display = "none"; $("app").style.display = "block";
+    log("Sesión iniciada");
+    conectarWs(); cargarChats();
+  } catch (e) { log("Error al iniciar sesión: " + e.message); }
+}
+
+// --- API HTTP de la cuenta 2 (Authorization: access token de Cognito) ---
+async function api(metodo, ruta, cuerpo) {
+  const r = await fetch(C.apiUrl + ruta, {
+    method: metodo,
+    headers: { Authorization: tokens.AccessToken, "Content-Type": "application/json" },
+    body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+  });
+  const datos = await r.json();
+  if (!r.ok) throw new Error(datos.error || datos.message || r.status);
+  return datos;
+}
+
+async function cargarChats() {
+  const chats = await api("GET", "/chats");
+  $("chats").innerHTML = "";
+  for (const c of chats) {
+    const li = document.createElement("li");
+    li.textContent = c.nombre || c.chatId;
+    li.onclick = () => abrirChat(c, li);
+    $("chats").appendChild(li);
+  }
+}
+
+async function crearChat() {
+  try {
+    const emails = $("emailsChat").value.split(",").map((e) => e.trim()).filter(Boolean);
+    await api("POST", "/chats", { nombre: $("nombreChat").value, emails });
+    log("Chat creado"); cargarChats();
+  } catch (e) { log("Error al crear chat: " + e.message); }
+}
+
+async function abrirChat(chat, li) {
+  chatActual = chat.chatId;
+  document.querySelectorAll("#chats li").forEach((x) => x.classList.remove("activo"));
+  li.classList.add("activo");
+  $("tituloChat").textContent = chat.nombre;
+  $("mensajes").innerHTML = "";
+  (await api("GET", `/chats/${chat.chatId}/mensajes`)).forEach(pintar);
+}
+
+function pintar(m) {
+  if (m.chatId !== chatActual) return;
+  const div = document.createElement("div");
+  div.className = "msg" + (m.remitenteId === yo.userId ? " mio" : "");
+  div.textContent = (m.remitenteId === yo.userId ? "" : m.remitenteId.slice(0, 8) + ": ") + m.texto;
+  $("mensajes").appendChild(div);
+  $("mensajes").scrollTop = 1e9;
+}
+
+// --- WebSocket de la cuenta 2 (token en la URL) ---
+function conectarWs() {
+  ws = new WebSocket(`${C.wsUrl}?token=${encodeURIComponent(tokens.AccessToken)}`);
+  ws.onopen = () => { $("estadoWs").textContent = "conectado"; log("WebSocket conectado"); };
+  ws.onclose = () => { $("estadoWs").textContent = "desconectado"; log("WebSocket cerrado"); };
+  ws.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    if (d.tipo === "nuevoMensaje") { pintar(d.mensaje); if (d.mensaje.chatId !== chatActual) log("Mensaje nuevo en otro chat"); }
+    if (d.tipo === "error") log("Error: " + d.error);
+  };
+}
+
+function enviar() {
+  if (!chatActual || !$("texto").value.trim()) return;
+  ws.send(JSON.stringify({ action: "enviarMensaje", chatId: chatActual, texto: $("texto").value }));
+  $("texto").value = "";
+}
+
+if (!C) log("Falta frontend/config.js. Ejecuta scripts/generar_config.sh después de terraform apply.");
+</script>
+</body>
+</html>
