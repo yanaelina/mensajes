@@ -6,11 +6,19 @@ Rutas:
     GET  /chats                    -> mis chats
     POST /chats                    -> {"nombre": "...", "emails": ["bob@x.com"]}
     GET  /chats/{chatId}/mensajes  -> historial (solo participantes)
+    GET  /chats/{chatId}/miembros  -> participantes con nombre y leidoHasta
+    POST /chats/{chatId}/leido     -> {"hasta": <enviadoEn ms>}; avisa a los demás por WebSocket
 """
 import json
+import os
 from urllib.parse import quote
 
+import boto3
+
 from cliente_datos import ErrorDatos, llamar
+
+sqs = boto3.client("sqs")
+COLA = os.environ["COLA_ENTREGA_URL"]
 
 
 def respuesta(codigo, cuerpo):
@@ -38,8 +46,11 @@ def handler(event, _context):
             return respuesta(200, llamar("GET", f"/usuarios/{yo}/chats"))
 
         if ruta == "POST /chats":
+            emails = [e for e in cuerpo.get("emails", []) if e.strip()]
+            if len(emails) > 1 and not (cuerpo.get("nombre") or "").strip():
+                return respuesta(400, {"error": "Los grupos necesitan un nombre"})
             ids = []
-            for email in cuerpo.get("emails", []):
+            for email in emails:
                 try:
                     ids.append(llamar("GET", f"/usuarios?email={quote(email.strip().lower())}")["userId"])
                 except ErrorDatos as e:
@@ -53,6 +64,25 @@ def handler(event, _context):
             if yo not in llamar("GET", f"/chats/{p['chatId']}/participantes"):
                 return respuesta(403, {"error": "no perteneces a este chat"})
             return respuesta(200, llamar("GET", f"/chats/{p['chatId']}/mensajes"))
+
+        if ruta == "GET /chats/{chatId}/miembros":
+            miembros = llamar("GET", f"/chats/{p['chatId']}/miembros")
+            if not any(m["userId"] == yo for m in miembros):
+                return respuesta(403, {"error": "no perteneces a este chat"})
+            return respuesta(200, miembros)
+
+        if ruta == "POST /chats/{chatId}/leido":
+            hasta = cuerpo.get("hasta")
+            if not isinstance(hasta, (int, float)) or hasta <= 0:
+                return respuesta(400, {"error": "falta hasta (enviadoEn del último mensaje leído)"})
+            # Si no pertenezco al chat, la condición de DynamoDB falla y no cambia nada.
+            r = llamar("POST", f"/chats/{p['chatId']}/leido", {"userId": yo, "hasta": int(hasta)})
+            if r.get("cambio"):
+                # La Lambda "entregar" reparte el aviso a los demás participantes.
+                sqs.send_message(QueueUrl=COLA, MessageBody=json.dumps({
+                    "tipo": "leido", "chatId": p["chatId"], "userId": yo, "leidoHasta": r["leidoHasta"],
+                }))
+            return respuesta(200, r)
 
     except ErrorDatos as e:
         return respuesta(e.codigo if e.codigo < 500 else 502, {"error": str(e)})

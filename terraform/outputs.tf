@@ -41,5 +41,10 @@ output "config_frontend" {
 
 output "frontend_bucket" {
   description = "Bucket privado (cuenta 2) con el index.html. La URL la genera scripts/generar_url.sh."
-  value       = aws_s3_bucket.frontend.id
+  value       = terraform_data.frontend_bucket.output.bucket
+}
+
+output "frontend_url" {
+  description = "Link fijo del frontend (API HTTP, ruta GET /). Cualquiera puede abrirlo."
+  value       = "${module.mensajeria.http_api_url}/"
 }

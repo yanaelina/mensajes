@@ -80,7 +80,12 @@ def obtener_usuario(p, q, b):
 
 def chats_de_usuario(p, q, b):
     res = PARTICIPANTES.query(IndexName="por_usuario", KeyConditionExpression=Key("userId").eq(p["userId"]))
-    chats = [{"chatId": i["chatId"], "nombre": i.get("nombreChat", "")} for i in res["Items"]]
+    chats = [{
+        "chatId": i["chatId"],
+        "nombre": i.get("nombreChat", ""),
+        "esGrupo": i.get("esGrupo", True),
+        "leidoHasta": i.get("leidoHasta", 0),
+    } for i in res["Items"]]
     return respuesta(200, chats)
 
 
@@ -91,9 +96,23 @@ def conexiones_de_usuario(p, q, b):
 
 # ---------------------------------------------------------------- chats ---
 
+def _usuarios(ids):
+    """Devuelve {userId: item} de la tabla de usuarios (BatchGetItem en lotes de 100)."""
+    ids, encontrados = list(ids), {}
+    for i in range(0, len(ids), 100):
+        pedido = {USUARIOS.name: {"Keys": [{"userId": u} for u in ids[i:i + 100]]}}
+        while pedido:
+            res = _ddb.batch_get_item(RequestItems=pedido)
+            for item in res["Responses"].get(USUARIOS.name, []):
+                encontrados[item["userId"]] = item
+            pedido = res.get("UnprocessedKeys") or None
+    return encontrados
+
+
 def crear_chat(p, q, b):
     creador = b.get("creadorId")
     participantes = set(b.get("participantes") or [])
+    nombre = (b.get("nombre") or "").strip()
     if not creador:
         raise ValueError("creadorId es obligatorio")
     participantes.add(creador)
@@ -101,24 +120,70 @@ def crear_chat(p, q, b):
         raise ValueError("Un chat necesita al menos 2 participantes")
     if len(participantes) > MAX_PARTICIPANTES:
         raise ValueError(f"Máximo {MAX_PARTICIPANTES} participantes")
+    es_grupo = len(participantes) > 2
+    if es_grupo and not nombre:
+        raise ValueError("Los grupos necesitan un nombre")
+
+    # Chat 1 a 1 sin nombre: cada participante ve el nombre de la otra persona.
+    nombre_para = {uid: nombre for uid in participantes}
+    if not nombre:
+        perfiles = _usuarios(participantes)
+        for uid in participantes:
+            otro = next(o for o in participantes if o != uid)
+            perfil = perfiles.get(otro, {})
+            nombre_para[uid] = perfil.get("nombre") or perfil.get("email", "Chat")
 
     chat = {
         "chatId": str(uuid.uuid4()),
-        "nombre": b.get("nombre") or "Chat",
+        "nombre": nombre,
+        "esGrupo": es_grupo,
         "creadorId": creador,
         "creadoEn": ahora_ms(),
     }
     CHATS.put_item(Item=chat)
     with PARTICIPANTES.batch_writer() as lote:
         for uid in participantes:
-            lote.put_item(Item={"chatId": chat["chatId"], "userId": uid, "nombreChat": chat["nombre"]})
+            lote.put_item(Item={
+                "chatId": chat["chatId"], "userId": uid,
+                "nombreChat": nombre_para[uid], "esGrupo": es_grupo, "leidoHasta": 0,
+            })
     chat["participantes"] = sorted(participantes)
+    chat["nombre"] = nombre_para[creador]  # lo que ve quien lo creó
     return respuesta(201, chat)
 
 
 def participantes_de_chat(p, q, b):
     res = PARTICIPANTES.query(KeyConditionExpression=Key("chatId").eq(p["chatId"]))
     return respuesta(200, [i["userId"] for i in res["Items"]])
+
+
+def miembros_de_chat(p, q, b):
+    """Participantes con su nombre y hasta qué mensaje leyeron (ms)."""
+    res = PARTICIPANTES.query(KeyConditionExpression=Key("chatId").eq(p["chatId"]))
+    perfiles = _usuarios(i["userId"] for i in res["Items"])
+    return respuesta(200, [{
+        "userId": i["userId"],
+        "nombre": perfiles.get(i["userId"], {}).get("nombre") or "Usuario",
+        "email": perfiles.get(i["userId"], {}).get("email", ""),
+        "leidoHasta": i.get("leidoHasta", 0),
+    } for i in res["Items"]])
+
+
+def marcar_leido(p, q, b):
+    """Avanza leidoHasta de un participante (nunca lo hace retroceder)."""
+    if not b.get("userId") or not b.get("hasta"):
+        raise ValueError("userId y hasta son obligatorios")
+    hasta = int(b["hasta"])
+    try:
+        PARTICIPANTES.update_item(
+            Key={"chatId": p["chatId"], "userId": b["userId"]},
+            UpdateExpression="SET leidoHasta = :h",
+            ConditionExpression="attribute_exists(userId) AND (attribute_not_exists(leidoHasta) OR leidoHasta < :h)",
+            ExpressionAttributeValues={":h": hasta},
+        )
+    except _ddb.meta.client.exceptions.ConditionalCheckFailedException:
+        return respuesta(200, {"cambio": False})
+    return respuesta(200, {"cambio": True, "leidoHasta": hasta})
 
 
 def guardar_mensaje(p, q, b):
@@ -175,6 +240,8 @@ RUTAS = {
     "GET /usuarios/{userId}/conexiones": conexiones_de_usuario,
     "POST /chats": crear_chat,
     "GET /chats/{chatId}/participantes": participantes_de_chat,
+    "GET /chats/{chatId}/miembros": miembros_de_chat,
+    "POST /chats/{chatId}/leido": marcar_leido,
     "POST /chats/{chatId}/mensajes": guardar_mensaje,
     "GET /chats/{chatId}/mensajes": listar_mensajes,
     "POST /conexiones": crear_conexion,

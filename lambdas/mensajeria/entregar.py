@@ -1,5 +1,6 @@
 """Consumidor de la cola SQS de entrega.
 
+Reparte mensajes nuevos y avisos de lectura ("leido").
 Por cada mensaje busca a los participantes del chat y sus conexiones
 WebSocket abiertas, y les empuja el mensaje. Si una conexión ya no existe
 (GoneException) la borra. Los usuarios offline verán el mensaje al pedir el
@@ -16,7 +17,11 @@ ws = boto3.client("apigatewaymanagementapi", endpoint_url=os.environ["WS_ENDPOIN
 
 
 def _entregar(mensaje):
-    datos = json.dumps({"tipo": "nuevoMensaje", "mensaje": mensaje}).encode()
+    # La cola lleva mensajes nuevos y avisos de lectura ({"tipo": "leido", ...}).
+    if mensaje.get("tipo") == "leido":
+        datos = json.dumps(mensaje).encode()
+    else:
+        datos = json.dumps({"tipo": "nuevoMensaje", "mensaje": mensaje}).encode()
     for user_id in llamar("GET", f"/chats/{mensaje['chatId']}/participantes"):
         for connection_id in llamar("GET", f"/usuarios/{user_id}/conexiones"):
             try:

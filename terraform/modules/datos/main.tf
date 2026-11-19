@@ -177,6 +177,8 @@ locals {
     "GET /usuarios/{userId}/conexiones",
     "POST /chats",
     "GET /chats/{chatId}/participantes",
+    "GET /chats/{chatId}/miembros",
+    "POST /chats/{chatId}/leido",
     "POST /chats/{chatId}/mensajes",
     "GET /chats/{chatId}/mensajes",
     "POST /conexiones",

@@ -14,6 +14,8 @@ data "aws_iam_role" "lab" {
 
 data "aws_region" "actual" {}
 
+data "aws_caller_identity" "actual" {}
+
 locals {
   ws_stage = "prod"
 
@@ -24,6 +26,7 @@ locals {
     ws-enviar     = { handler = "ws_enviar.handler", timeout = 10 }
     entregar      = { handler = "entregar.handler", timeout = 30 }
     api-chats     = { handler = "api_chats.handler", timeout = 10 }
+    web           = { handler = "web.handler", timeout = 10 }
   }
 }
 
@@ -59,6 +62,8 @@ resource "aws_lambda_function" "fn" {
       COGNITO_ISSUER    = var.cognito_issuer
       COGNITO_CLIENT_ID = var.cognito_client_id
       COLA_ENTREGA_URL  = aws_sqs_queue.entrega.url
+      # Bucket privado del frontend (lo crea frontend.tf en la raíz con este mismo nombre)
+      FRONTEND_BUCKET = "${var.prefijo}-frontend-${data.aws_caller_identity.actual.account_id}"
       # Endpoint de administración de conexiones (para responder por WebSocket)
       WS_ENDPOINT = "https://${aws_apigatewayv2_api.ws.id}.execute-api.${data.aws_region.actual.name}.amazonaws.com/${local.ws_stage}"
     }
@@ -197,12 +202,36 @@ resource "aws_apigatewayv2_route" "http" {
     "GET /chats",
     "POST /chats",
     "GET /chats/{chatId}/mensajes",
+    "GET /chats/{chatId}/miembros",
+    "POST /chats/{chatId}/leido",
   ])
   api_id             = aws_apigatewayv2_api.http.id
   route_key          = each.value
   target             = "integrations/${aws_apigatewayv2_integration.chats.id}"
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+# Ruta pública (sin autorizador) que sirve el frontend: link fijo para cualquiera.
+resource "aws_apigatewayv2_integration" "web" {
+  api_id                 = aws_apigatewayv2_api.http.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.fn["web"].invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "web" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "GET /"
+  target    = "integrations/${aws_apigatewayv2_integration.web.id}"
+}
+
+resource "aws_lambda_permission" "web" {
+  statement_id  = "PermitirApiHttpWeb"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.fn["web"].function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
 }
 
 resource "aws_apigatewayv2_stage" "http" {

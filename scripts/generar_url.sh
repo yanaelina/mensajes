@@ -10,3 +10,4 @@ expira="${1:-3600}"
 bucket="$(terraform -chdir=terraform output -raw frontend_bucket)"
 perfil="${PERFIL_MENSAJERIA:-cuenta-mensajeria}"
 aws s3 presign "s3://$bucket/index.html" --expires-in "$expira" --profile "$perfil" --region "${REGION:-us-east-1}"
+3
