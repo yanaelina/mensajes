@@ -9,3 +9,7 @@ output "websocket_url" {
 output "cola_entrega_url" {
   value = aws_sqs_queue.entrega.url
 }
+
+output "log_groups" {
+  value = [for g in aws_cloudwatch_log_group.fn : g.name]
+}

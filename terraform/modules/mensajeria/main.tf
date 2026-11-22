@@ -25,8 +25,9 @@ locals {
     ws-disconnect = { handler = "ws_disconnect.handler", timeout = 10 }
     ws-enviar     = { handler = "ws_enviar.handler", timeout = 10 }
     entregar      = { handler = "entregar.handler", timeout = 30 }
-    api-chats     = { handler = "api_chats.handler", timeout = 10 }
+    api-chats     = { handler = "api_chats.handler", timeout = 30 }
     web           = { handler = "web.handler", timeout = 10 }
+    monitoreo     = { handler = "monitoreo.handler", timeout = 20 }
   }
 }
 
@@ -62,6 +63,12 @@ resource "aws_lambda_function" "fn" {
       COGNITO_ISSUER    = var.cognito_issuer
       COGNITO_CLIENT_ID = var.cognito_client_id
       COLA_ENTREGA_URL  = aws_sqs_queue.entrega.url
+      PREFIJO           = var.prefijo
+      HTTP_API_ID       = aws_apigatewayv2_api.http.id
+      # Endpoint de métricas de la cuenta 1 (panel de monitoreo)
+      IDENTIDAD_MONITOREO_URL = var.identidad_monitoreo_url
+      # Tema SNS de eventos (api-chats publica "chat_creado" → Telegram)
+      TOPICO_EVENTOS_ARN = var.topico_eventos_arn
       # Bucket privado del frontend (lo crea frontend.tf en la raíz con este mismo nombre)
       FRONTEND_BUCKET = "${var.prefijo}-frontend-${data.aws_caller_identity.actual.account_id}"
       # Endpoint de administración de conexiones (para responder por WebSocket)
@@ -168,7 +175,7 @@ resource "aws_apigatewayv2_api" "http" {
 
   cors_configuration {
     allow_origins = ["*"]
-    allow_methods = ["GET", "POST", "PUT", "OPTIONS"]
+    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     allow_headers = ["authorization", "content-type"]
     max_age       = 3600
   }
@@ -201,9 +208,12 @@ resource "aws_apigatewayv2_route" "http" {
     "PUT /yo",
     "GET /chats",
     "POST /chats",
+    "DELETE /chats/{chatId}",
     "GET /chats/{chatId}/mensajes",
     "GET /chats/{chatId}/miembros",
+    "POST /chats/{chatId}/miembros",
     "POST /chats/{chatId}/leido",
+    "DELETE /chats/{chatId}/mensajes/{messageId}",
   ])
   api_id             = aws_apigatewayv2_api.http.id
   route_key          = each.value

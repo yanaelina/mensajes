@@ -16,6 +16,8 @@ import time
 
 import boto3
 
+from registro import aviso, contexto, info, instrumentado
+
 ISSUER = os.environ["COGNITO_ISSUER"]
 CLIENT_ID = os.environ["COGNITO_CLIENT_ID"]
 REGION = ISSUER.split(".")[1]  # https://cognito-idp.<region>.amazonaws.com/<pool>
@@ -40,6 +42,7 @@ def _politica(efecto, recurso, user_id="anonimo", contexto=None):
     }
 
 
+@instrumentado
 def handler(event, _context):
     recurso = event["methodArn"]
     token = (event.get("queryStringParameters") or {}).get("token", "")
@@ -51,8 +54,10 @@ def handler(event, _context):
             raise ValueError("token no es de acceso o expiró")
         usuario = cognito.get_user(AccessToken=token)
     except Exception as e:  # noqa: BLE001 - cualquier error = acceso denegado
-        print(f"Conexión rechazada: {e}")
+        aviso("conexion_rechazada", motivo=str(e), tipo_error=type(e).__name__)
         return _politica("Deny", recurso)
 
     attrs = {a["Name"]: a["Value"] for a in usuario["UserAttributes"]}
+    contexto(user_id=attrs["sub"])
+    info("conexion_autorizada")
     return _politica("Allow", recurso, attrs["sub"], {"userId": attrs["sub"], "email": attrs.get("email", "")})

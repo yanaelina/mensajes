@@ -28,3 +28,19 @@ variable "token_interno" {
 variable "lambdas_dir" {
   type = string
 }
+
+variable "identidad_monitoreo_url" {
+  description = "Endpoint GET /monitoreo de la cuenta 1 (métricas de Cognito)."
+  type        = string
+}
+
+variable "topico_alertas_arn" {
+  description = "Tema SNS de alertas de esta cuenta (módulo observabilidad). Las alarmas publican ahí."
+  type        = string
+}
+
+variable "topico_eventos_arn" {
+  description = "Tema SNS de eventos de la app (chat creado → Telegram). Vacío = sin avisos."
+  type        = string
+  default     = ""
+}

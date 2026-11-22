@@ -43,6 +43,64 @@ check "tres_cuentas_distintas" {
   }
 }
 
+# --- Observabilidad (una instancia por cuenta) ------------------------------
+# Tema SNS de alertas + Lambda que reenvía a Telegram + métricas y consultas
+# sobre los logs JSON de las Lambdas. Ver modules/observabilidad.
+locals {
+  observabilidad = {
+    telegram_bot_token = var.telegram_bot_token
+    telegram_chat_id   = var.telegram_chat_id
+    email_alertas      = var.email_alertas
+    lambdas_dir        = "${path.root}/../lambdas/alertas"
+  }
+}
+
+module "observabilidad_identidad" {
+  source    = "./modules/observabilidad"
+  providers = { aws = aws.identidad }
+
+  prefijo            = var.prefijo
+  clave              = "identidad"
+  nombre_cuenta      = "Cuenta 1 · Identidad"
+  lab_role_name      = var.lab_role_name
+  log_groups         = module.identidad.log_groups
+  lambdas_dir        = local.observabilidad.lambdas_dir
+  telegram_bot_token = local.observabilidad.telegram_bot_token
+  telegram_chat_id   = local.observabilidad.telegram_chat_id
+  email_alertas      = local.observabilidad.email_alertas
+}
+
+module "observabilidad_mensajeria" {
+  source    = "./modules/observabilidad"
+  providers = { aws = aws.mensajeria }
+
+  prefijo            = var.prefijo
+  clave              = "mensajeria"
+  nombre_cuenta      = "Cuenta 2 · Mensajería"
+  eventos            = var.notificar_chats
+  lab_role_name      = var.lab_role_name
+  log_groups         = module.mensajeria.log_groups
+  lambdas_dir        = local.observabilidad.lambdas_dir
+  telegram_bot_token = local.observabilidad.telegram_bot_token
+  telegram_chat_id   = local.observabilidad.telegram_chat_id
+  email_alertas      = local.observabilidad.email_alertas
+}
+
+module "observabilidad_datos" {
+  source    = "./modules/observabilidad"
+  providers = { aws = aws.datos }
+
+  prefijo            = var.prefijo
+  clave              = "datos"
+  nombre_cuenta      = "Cuenta 3 · Datos"
+  lab_role_name      = var.lab_role_name
+  log_groups         = module.datos.log_groups
+  lambdas_dir        = local.observabilidad.lambdas_dir
+  telegram_bot_token = local.observabilidad.telegram_bot_token
+  telegram_chat_id   = local.observabilidad.telegram_chat_id
+  email_alertas      = local.observabilidad.email_alertas
+}
+
 # --- Cuenta 3: datos -------------------------------------------------------
 module "datos" {
   source = "./modules/datos"
@@ -54,6 +112,8 @@ module "datos" {
   lab_role_name = var.lab_role_name
   token_interno = random_password.token_interno.result
   lambdas_dir   = "${path.root}/../lambdas/datos"
+
+  topico_alertas_arn = module.observabilidad_datos.topico_alertas_arn
 }
 
 # --- Cuenta 1: identidad ---------------------------------------------------
@@ -69,6 +129,7 @@ module "identidad" {
   datos_api_url           = module.datos.api_url
   token_interno           = random_password.token_interno.result
   lambdas_dir             = "${path.root}/../lambdas/identidad"
+  topico_alertas_arn      = module.observabilidad_identidad.topico_alertas_arn
 }
 
 # --- Cuenta 2: mensajería --------------------------------------------------
@@ -85,4 +146,8 @@ module "mensajeria" {
   datos_api_url     = module.datos.api_url
   token_interno     = random_password.token_interno.result
   lambdas_dir       = "${path.root}/../lambdas/mensajeria"
+
+  identidad_monitoreo_url = module.identidad.monitoreo_url
+  topico_alertas_arn      = module.observabilidad_mensajeria.topico_alertas_arn
+  topico_eventos_arn      = module.observabilidad_mensajeria.topico_eventos_arn
 }

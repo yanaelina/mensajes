@@ -15,3 +15,8 @@ variable "lambdas_dir" {
   description = "Carpeta con el código de la Lambda de datos."
   type        = string
 }
+
+variable "topico_alertas_arn" {
+  description = "Tema SNS de alertas de esta cuenta (módulo observabilidad). Las alarmas publican ahí."
+  type        = string
+}

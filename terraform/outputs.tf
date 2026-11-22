@@ -48,3 +48,25 @@ output "frontend_url" {
   description = "Link fijo del frontend (API HTTP, ruta GET /). Cualquiera puede abrirlo."
   value       = "${module.mensajeria.http_api_url}/"
 }
+
+output "dashboards_cloudwatch" {
+  description = "Dashboards de CloudWatch (ábrelos con la sesión de consola de cada cuenta)."
+  value = {
+    for c in ["identidad", "mensajeria", "datos"] :
+    c => "https://${var.region}.console.aws.amazon.com/cloudwatch/home?region=${var.region}#dashboards/dashboard/${var.prefijo}-${c}"
+  }
+}
+
+output "temas_sns_alertas" {
+  description = "Tema SNS de alertas de cada cuenta (las alarmas publican ahí y se reenvían a Telegram)."
+  value = {
+    identidad  = module.observabilidad_identidad.topico_alertas_arn
+    mensajeria = module.observabilidad_mensajeria.topico_alertas_arn
+    datos      = module.observabilidad_datos.topico_alertas_arn
+  }
+}
+
+output "logs_insights_url" {
+  description = "Logs Insights (ábrelo con la consola de cada cuenta; consultas guardadas en <prefijo>-<cuenta>/)."
+  value       = "https://${var.region}.console.aws.amazon.com/cloudwatch/home?region=${var.region}#logsV2:logs-insights"
+}

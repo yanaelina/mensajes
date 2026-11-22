@@ -6,9 +6,13 @@ flujo normal con código por email.
 """
 import os
 
+from registro import info, instrumentado
 
+
+@instrumentado
 def handler(event, _context):
     if os.environ.get("AUTO_CONFIRMAR", "true").lower() == "true":
         event["response"]["autoConfirmUser"] = True
         event["response"]["autoVerifyEmail"] = True
+    info("preregistro", autoconfirmado=event["response"].get("autoConfirmUser", False))
     return event

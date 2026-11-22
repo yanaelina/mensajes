@@ -136,7 +136,7 @@ resource "aws_lambda_function" "datos_api" {
   handler          = "datos_api.handler"
   filename         = data.archive_file.datos.output_path
   source_code_hash = data.archive_file.datos.output_base64sha256
-  timeout          = 10
+  timeout          = 28 # borrar un chat con muchos mensajes puede tardar
   memory_size      = 256
 
   environment {
@@ -147,6 +147,8 @@ resource "aws_lambda_function" "datos_api" {
       TABLA_PARTICIPANTES = aws_dynamodb_table.participantes.name
       TABLA_MENSAJES      = aws_dynamodb_table.mensajes.name
       TABLA_CONEXIONES    = aws_dynamodb_table.conexiones.name
+      DATOS_API_ID        = aws_apigatewayv2_api.datos.id
+      PREFIJO             = var.prefijo
     }
   }
 
@@ -170,17 +172,22 @@ resource "aws_apigatewayv2_integration" "datos" {
 
 locals {
   rutas_datos = toset([
+    "GET /monitoreo",
     "POST /usuarios",
     "GET /usuarios",
     "GET /usuarios/{userId}",
     "GET /usuarios/{userId}/chats",
     "GET /usuarios/{userId}/conexiones",
     "POST /chats",
+    "DELETE /chats/{chatId}",
     "GET /chats/{chatId}/participantes",
+    "POST /chats/{chatId}/participantes",
     "GET /chats/{chatId}/miembros",
     "POST /chats/{chatId}/leido",
+    "POST /chats/{chatId}/entregado",
     "POST /chats/{chatId}/mensajes",
     "GET /chats/{chatId}/mensajes",
+    "DELETE /chats/{chatId}/mensajes/{messageId}",
     "POST /conexiones",
     "DELETE /conexiones/{connectionId}",
   ])

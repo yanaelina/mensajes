@@ -85,6 +85,7 @@
     width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.4);
     border-top-color: #fff; animation: girar .7s linear infinite;
   }
+  .btn.secundario .spinner { border-color: var(--border); border-top-color: var(--accent); }
   @keyframes girar { to { transform: rotate(360deg); } }
 
   /* ---------- Pantalla de acceso ---------- */
@@ -182,6 +183,29 @@
   .tick { display: inline-flex; }
   .tick svg { width: 16px; height: 16px; }
   .tick.leido { color: #7dd3fc; }
+  .burbuja.borrada { font-style: italic; opacity: .75; }
+  .burbuja.borrada .texto::before { content: "🚫 "; font-style: normal; }
+  .btn-borrar {
+    border: 0; background: transparent; color: inherit; padding: 0 2px; margin-right: auto;
+    display: inline-flex; opacity: 0; transition: opacity .12s;
+  }
+  .btn-borrar svg { width: 14px; height: 14px; }
+  .burbuja:hover .btn-borrar, .btn-borrar:focus-visible { opacity: .8; }
+  .btn-borrar:hover { opacity: 1 !important; }
+  @media (hover: none) { .btn-borrar { opacity: .6; } }
+  .menu-chat { position: relative; }
+  .menu-opciones {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 15; min-width: 220px; padding: 6px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
+    animation: fundido .12s;
+  }
+  .menu-opciones button {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px;
+    background: transparent; text-align: left; font-size: 14px;
+  }
+  .menu-opciones button:hover { background: var(--panel-2); }
+  .menu-opciones button.peligro { color: var(--err); }
+  .menu-opciones svg { width: 18px; height: 18px; flex-shrink: 0; }
   .visto { align-self: flex-end; font-size: 11.5px; color: var(--muted); margin: 3px 4px 0; }
   @keyframes aparecer { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .estado-vacio { margin: auto; text-align: center; color: var(--muted); max-width: 320px; padding: 20px; }
@@ -224,6 +248,44 @@
   .aviso.error { border-left-color: var(--err); }
   .aviso.ok { border-left-color: var(--ok); }
   @keyframes bajar { from { opacity: 0; transform: translateY(-8px); } }
+
+  /* ---------- Monitoreo ---------- */
+  #panelMonitoreo { position: fixed; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; }
+  .mon-cabecera { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .mon-cabecera .titulo { flex: 1; min-width: 0; }
+  .mon-cabecera .titulo b { display: block; font-size: 17px; }
+  .mon-cabecera .titulo span { font-size: 12.5px; color: var(--muted); }
+  .mon-cuerpo { flex: 1; overflow-y: auto; padding: 20px 16px 40px; }
+  .mon-contenido { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  .mon-intro { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .mon-intro b { color: var(--text); }
+  .mon-cuenta { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .mon-cuenta-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 12px; }
+  .mon-cuenta-cab h3 { margin: 0; font-size: 16px; }
+  .mon-cuenta-cab .serv { color: var(--muted); font-size: 13px; flex: 1; }
+  .mon-cuenta-cab a { font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 600; white-space: nowrap; }
+  .mon-cuenta-cab a:hover { text-decoration: underline; }
+  .mon-alarmas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .estado-alarma { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
+  .estado-alarma i { font-style: normal; font-weight: 800; }
+  .estado-alarma.ok i { color: var(--ok); }
+  .estado-alarma.alarma { border-color: var(--err); }
+  .estado-alarma.alarma i { color: var(--err); }
+  .estado-alarma.sin i { color: var(--muted); }
+  .mon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .mon-tile { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--panel-2); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .mon-tile .etq { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .mon-tile .val { font-size: 24px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .mon-tile .val small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+  .mon-tile .ayuda-m { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+  .mon-tile svg { width: 100%; height: 42px; display: block; margin: 4px 0 2px; overflow: visible; }
+  .mon-tile svg .barra { fill: var(--accent); }
+  .mon-tile svg .pista { fill: var(--border); }
+  .mon-tile svg .hit { fill: transparent; cursor: default; }
+  .mon-tile svg .hit:hover + .barra, .mon-tile svg g:hover .barra { fill: var(--accent-2); }
+  .mon-ejes { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
+  .mon-error { color: var(--err); font-size: 13.5px; }
+  #tipMon { position: fixed; z-index: 40; pointer-events: none; background: var(--text); color: var(--panel); font-size: 12px; padding: 5px 8px; border-radius: 6px; white-space: nowrap; }
 
   /* ---------- Móvil ---------- */
   @media (max-width: 760px) {
@@ -296,6 +358,9 @@
         <b id="miNombre"></b>
         <div class="estado"><span class="punto" id="puntoWs"></span><span id="textoWs">Desconectado</span></div>
       </div>
+      <button class="btn-icono" onclick="abrirMonitoreo()" title="Monitoreo" aria-label="Abrir monitoreo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 4 3 5-7"/></svg>
+      </button>
       <button class="btn-icono" onclick="cargarChats(true)" title="Actualizar chats" aria-label="Actualizar chats">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg>
       </button>
@@ -323,6 +388,15 @@
       </button>
       <div class="avatar" id="convAvatar"></div>
       <div class="titulo"><b id="convNombre"></b><span id="convSub"></span></div>
+      <button class="btn-icono oculto" id="btnAgregar" onclick="abrirModal('agregar')" title="Agregar personas" aria-label="Agregar personas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+      </button>
+      <div class="menu-chat">
+        <button class="btn-icono" id="btnMenuChat" onclick="alternarMenuChat(event)" title="Más opciones" aria-label="Más opciones" aria-haspopup="menu">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+        </button>
+        <div class="menu-opciones oculto" id="menuChat" role="menu"></div>
+      </div>
     </div>
     <div id="mensajes"></div>
     <form class="compositor oculto" id="compositor" onsubmit="enviar(event)">
@@ -334,11 +408,35 @@
   </section>
 </div>
 
+<!-- ===================== Monitoreo ===================== -->
+<div id="panelMonitoreo" class="oculto" role="dialog" aria-label="Monitoreo">
+  <div class="mon-cabecera">
+    <button class="btn-icono" onclick="cerrarMonitoreo()" aria-label="Volver al chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="titulo"><b>Monitoreo</b><span id="monEstado">Cargando…</span></div>
+    <button class="btn secundario" id="btnMonActualizar" onclick="cargarMonitoreo()">Actualizar</button>
+  </div>
+  <div class="mon-cuerpo">
+    <div class="mon-contenido">
+      <div class="mon-intro">
+        <b>Última hora, en intervalos de 5 minutos</b>, leída de CloudWatch en cada una de las 3 cuentas.
+        Todo es serverless: <b>API Gateway</b> y <b>Cognito</b> escalan solos, <b>Lambda</b> crea más instancias
+        simultáneas cuando sube la carga, <b>SQS</b> absorbe picos (sube "En espera") y <b>DynamoDB on-demand</b>
+        ajusta su capacidad sin configurar nada. Las alarmas en rojo indican errores o límites alcanzados.
+        Se actualiza cada minuto mientras está abierto.
+      </div>
+      <div id="monCuentas"></div>
+    </div>
+  </div>
+</div>
+<div id="tipMon" class="oculto"></div>
+
 <!-- ===================== Modal nuevo chat ===================== -->
 <div class="fondo-modal oculto" id="modal" onclick="if (event.target === this) cerrarModal()">
-  <form class="modal" onsubmit="crearChat(event)">
-    <h2>Nuevo chat</h2>
-    <p class="sub">Invita a una persona para un chat 1 a 1, o a varias para un grupo.</p>
+  <form class="modal" onsubmit="enviarModal(event)">
+    <h2 id="modalTitulo">Nuevo chat</h2>
+    <p class="sub" id="modalSub">Invita a una persona para un chat 1 a 1, o a varias para un grupo.</p>
     <div class="campo">
       <label for="emailInput">Participantes</label>
       <div class="chips" id="chips" onclick="$('emailInput').focus()">
@@ -346,7 +444,7 @@
       </div>
       <div class="ayuda">Pulsa Enter o coma después de cada correo.</div>
     </div>
-    <div class="campo">
+    <div class="campo" id="campoNombreChat">
       <label for="nombreChat">Nombre del chat <span style="font-weight:400" id="nombreChatNota">(opcional)</span></label>
       <input class="input" id="nombreChat" placeholder="Ej. Equipo de proyecto">
       <div class="ayuda" id="nombreChatAyuda">Si lo dejas vacío, el chat se llamará como la otra persona.</div>
@@ -372,8 +470,10 @@ const vistos = new Set();       // messageId ya pintados en el chat abierto
 const miembros = {};            // chatId -> {userId: {nombre, email, leidoHasta}}
 let correos = [];
 let timerLeido = null;
+let modoModal = "nuevo";         // "nuevo" | "agregar"
 
 const SVG_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const SVG_BORRAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
 const SVG_TICK2 = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12.5l4.5 4.5L16 7.5"/><path d="M10.5 16.5l.5.5L20.5 7.5"/></svg>';
 
 // ---------------------------------------------------------------- utilidades
@@ -396,6 +496,10 @@ function horaCorta(ms) {
   const d = new Date(Number(ms));
   return d.toDateString() === new Date().toDateString() ? hora(ms) : d.toLocaleDateString([], { day: "numeric", month: "short" });
 }
+const TEXTO_BORRADO = "Mensaje eliminado";
+const textoVista = (m) => (m.borrado ? TEXTO_BORRADO : m.texto);
+// Chat 1 a 1 sin nombre: no admite más personas.
+const esDirecto = (c) => (c && c.directo !== undefined ? c.directo : !c?.esGrupo);
 const nombreDe = (chatId, userId) => miembros[chatId]?.[userId]?.nombre || "…";
 const otrosMiembros = (chatId) => Object.entries(miembros[chatId] || {}).filter(([id]) => id !== yo.userId).map(([, m]) => m);
 
@@ -511,6 +615,7 @@ function entrarApp(saludo) {
 
 function cerrarSesion(motivo) {
   saliendo = true;
+  cerrarMonitoreo();
   clearTimeout(timerWs);
   if (ws) ws.close();
   tokens = yo = ws = null; chats = []; chatActual = null;
@@ -601,6 +706,7 @@ function mostrarVacio() {
 }
 
 async function abrirChat(chat) {
+  cerrarMenuChat();
   chatActual = chat.chatId;
   if (resumen[chat.chatId]) resumen[chat.chatId].noLeidos = 0;
   pintarLista();
@@ -608,6 +714,7 @@ async function abrirChat(chat) {
   $("convCabecera").classList.remove("oculto");
   $("compositor").classList.remove("oculto");
   $("convNombre").textContent = chat.nombre || "Chat";
+  $("btnAgregar").classList.toggle("oculto", esDirecto(chat));
   $("convSub").textContent = "Cargando mensajes…";
   pintarAvatar($("convAvatar"), chat.nombre || "Chat", chat.chatId);
   limpiarMensajes();
@@ -624,7 +731,7 @@ async function abrirChat(chat) {
     }
     lista.forEach((m) => pintarMensaje(m, false));
     const ultimo = lista[lista.length - 1];
-    if (ultimo) resumen[chat.chatId] = { texto: ultimo.texto, enviadoEn: ultimo.enviadoEn, mio: ultimo.remitenteId === yo.userId, noLeidos: 0 };
+    if (ultimo) resumen[chat.chatId] = { texto: textoVista(ultimo), messageId: ultimo.messageId, enviadoEn: ultimo.enviadoEn, mio: ultimo.remitenteId === yo.userId, noLeidos: 0 };
     pintarLista();
     actualizarSub();
     actualizarTicks();
@@ -652,19 +759,23 @@ function actualizarSub() {
   else $("convSub").textContent = otros.map((m) => m.nombre).join(", ") + " y tú";
 }
 
-// ✓ = enviado, ✓✓ azul = lo leyeron todos. Debajo del último mensaje propio: "Visto" / "Visto por …".
+// ✓ = enviado, ✓✓ gris = llegó a todos, ✓✓ azul = lo leyeron todos.
+// Debajo del último mensaje propio: "Visto" / "Visto por …".
+const entregadoA = (m) => Math.max(Number(m.entregadoHasta) || 0, Number(m.leidoHasta) || 0);  // leído implica entregado
 function actualizarTicks() {
   if (!chatActual) return;
   const otros = otrosMiembros(chatActual);
   const propias = [...document.querySelectorAll("#mensajes .grupo.mio .burbuja")];
   for (const b of propias) {
     const ts = Number(b.dataset.ts);
-    const todos = otros.length > 0 && otros.every((m) => Number(m.leidoHasta) >= ts);
+    const leido = otros.length > 0 && otros.every((m) => Number(m.leidoHasta) >= ts);
+    const entregado = otros.length > 0 && otros.every((m) => entregadoA(m) >= ts);
     const t = b.querySelector(".tick");
-    t.classList.toggle("leido", todos);
-    t.innerHTML = todos ? SVG_TICK2 : SVG_TICK;
+    if (!t) continue;
+    t.classList.toggle("leido", leido);
+    t.innerHTML = entregado ? SVG_TICK2 : SVG_TICK;
     const quien = otros.filter((m) => Number(m.leidoHasta) >= ts).map((m) => m.nombre);
-    t.title = todos ? "Leído" : quien.length ? "Leído por " + quien.join(", ") : "Enviado";
+    t.title = leido ? "Leído" : quien.length ? "Leído por " + quien.join(", ") : entregado ? "Entregado" : "Enviado";
   }
 
   document.querySelectorAll("#mensajes .visto").forEach((v) => v.remove());
@@ -695,6 +806,55 @@ function marcarLeido() {
     if (yoM) yoM.leidoHasta = hasta;
     try { await api("POST", `/chats/${chatId}/leido`, { hasta }); } catch {}
   }, 300);
+}
+
+// ---------------------------------------------------------------- eliminar chat
+const SVG_SALIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>';
+
+function alternarMenuChat(ev) {
+  ev.stopPropagation();
+  const menu = $("menuChat");
+  if (!menu.classList.contains("oculto")) return cerrarMenuChat();
+  const chat = chats.find((c) => c.chatId === chatActual);
+  if (!chat) return;
+  menu.innerHTML = "";
+  const opcion = (svg, texto, peligro, accion) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.setAttribute("role", "menuitem");
+    if (peligro) b.className = "peligro";
+    b.innerHTML = svg; b.append(texto);
+    b.onclick = () => { cerrarMenuChat(); accion(); };
+    menu.appendChild(b);
+  };
+  opcion(chat.esGrupo ? SVG_SALIR : SVG_BORRAR, chat.esGrupo ? "Salir del grupo" : "Eliminar chat para mí", false,
+    () => eliminarChat(chat, "mi"));
+  // En grupos solo quien lo creó puede eliminarlo para todos (el servidor también lo comprueba).
+  if (!chat.esGrupo || chat.creadorId === yo.userId)
+    opcion(SVG_BORRAR, "Eliminar para todos", true, () => eliminarChat(chat, "todos"));
+  menu.classList.remove("oculto");
+}
+function cerrarMenuChat() { $("menuChat").classList.add("oculto"); }
+
+async function eliminarChat(chat, para) {
+  const nombre = chat.nombre || "este chat";
+  const pregunta = para === "todos"
+    ? `¿Eliminar «${nombre}» para todos? Se borrarán todos los mensajes y no se puede deshacer.`
+    : chat.esGrupo ? `¿Salir del grupo «${nombre}»?`
+    : `¿Eliminar «${nombre}» para ti? Se borrará tu historial; la otra persona lo conserva.`;
+  if (!confirm(pregunta)) return;
+  try {
+    await api("DELETE", `/chats/${chat.chatId}?para=${para}`);
+    quitarChat(chat.chatId);
+    avisar(para === "todos" ? "Chat eliminado para todos" : chat.esGrupo ? "Saliste del grupo" : "Chat eliminado", "ok");
+  } catch (e) { avisar("No se pudo eliminar: " + e.message, "error"); }
+}
+
+// Quita el chat de la lista (y lo cierra si estaba abierto).
+function quitarChat(chatId) {
+  chats = chats.filter((c) => c.chatId !== chatId);
+  delete resumen[chatId];
+  delete miembros[chatId];
+  if (chatActual === chatId) volverALista(); else pintarLista();
 }
 
 function volverALista() {
@@ -755,12 +915,22 @@ function pintarMensaje(m, animar = true) {
   const b = document.createElement("div");
   b.className = "burbuja";
   b.dataset.ts = m.enviadoEn;
+  b.dataset.id = m.messageId;
   if (!animar) b.style.animation = "none";
-  b.textContent = m.texto;
+  const texto = document.createElement("span");
+  texto.className = "texto";
+  b.appendChild(texto);
   const meta = document.createElement("span");
   meta.className = "meta";
-  meta.textContent = hora(m.enviadoEn);
+  const h = document.createElement("span");
+  h.textContent = hora(m.enviadoEn);
+  meta.appendChild(h);
   if (mio) {
+    const x = document.createElement("button");
+    x.type = "button"; x.className = "btn-borrar"; x.innerHTML = SVG_BORRAR;
+    x.title = "Borrar para todos"; x.setAttribute("aria-label", "Borrar mensaje");
+    x.onclick = () => borrarMensaje(m);
+    meta.prepend(x);
     const t = document.createElement("span");
     t.className = "tick";
     t.innerHTML = SVG_TICK;
@@ -768,6 +938,33 @@ function pintarMensaje(m, animar = true) {
   }
   b.appendChild(meta);
   grupo.querySelector(".burbujas").appendChild(b);
+  texto.textContent = m.texto || "";
+  if (m.borrado) marcarBorrada(b);
+}
+
+// Deja la burbuja como "Mensaje eliminado" (sin botón de borrar ni ticks).
+function marcarBorrada(b) {
+  b.classList.add("borrada");
+  b.querySelector(".texto").textContent = TEXTO_BORRADO;
+  b.querySelector(".btn-borrar")?.remove();
+  b.querySelector(".tick")?.remove();
+}
+
+function aplicarBorrado(chatId, messageId) {
+  if (chatId === chatActual) {
+    const b = document.querySelector(`#mensajes .burbuja[data-id="${CSS.escape(messageId)}"]`);
+    if (b) { marcarBorrada(b); actualizarTicks(); }
+  }
+  const r = resumen[chatId];
+  if (r && r.messageId === messageId) { r.texto = TEXTO_BORRADO; pintarLista(); }
+}
+
+async function borrarMensaje(m) {
+  if (!confirm("¿Borrar este mensaje para todos?")) return;
+  try {
+    await api("DELETE", `/chats/${m.chatId}/mensajes/${encodeURIComponent(m.messageId)}?enviadoEn=${m.enviadoEn}`);
+    aplicarBorrado(m.chatId, m.messageId);
+  } catch (e) { avisar("No se pudo borrar: " + e.message, "error"); }
 }
 
 function limpiarMensajes() { $("mensajes").innerHTML = ""; delete $("mensajes").dataset.ultimoDia; }
@@ -831,10 +1028,49 @@ function conectarWs() {
       if (d.chatId === chatActual) actualizarTicks();
       return;
     }
+    if (d.tipo === "entregado") {
+      const mm = miembros[d.chatId]?.[d.userId];
+      if (mm) mm.entregadoHasta = Math.max(Number(mm.entregadoHasta) || 0, d.entregadoHasta);
+      if (d.chatId === chatActual) actualizarTicks();
+      return;
+    }
+    if (d.tipo === "mensajeBorrado") return aplicarBorrado(d.chatId, d.messageId);
+    if (d.tipo === "chatEliminado" || d.tipo === "chatOculto") {
+      if (!chats.some((c) => c.chatId === d.chatId)) return;  // ya lo quité yo
+      const nombre = chats.find((c) => c.chatId === d.chatId)?.nombre || "Un chat";
+      quitarChat(d.chatId);
+      if (d.userId !== yo.userId) avisar(`${nombre} fue eliminado por otro participante`);
+      return;
+    }
+    if (d.tipo === "miembroSalio") {
+      if (d.userId === yo.userId) return quitarChat(d.chatId);  // salí desde otra pestaña
+      if (d.chatId === chatActual) {
+        avisar(`${nombreDe(d.chatId, d.userId)} salió del grupo`);
+        await cargarMiembros(d.chatId);
+        actualizarSub();
+        actualizarTicks();
+      }
+      return;
+    }
+    if (d.tipo === "miembrosAgregados") {
+      const meAgregaron = d.agregados.includes(yo.userId);
+      if (meAgregaron && d.por !== yo.userId) avisar("Te agregaron a un chat", "ok");
+      await cargarChats();  // el chat pudo pasar de 1 a 1 a grupo, o es nuevo para mí
+      if (d.chatId === chatActual) {
+        await cargarMiembros(d.chatId);
+        if (d.por !== yo.userId) {
+          const nombres = d.agregados.map((id) => nombreDe(d.chatId, id)).join(", ");
+          avisar(`${nombreDe(d.chatId, d.por)} agregó a ${nombres}`);
+        }
+        actualizarSub();
+        actualizarTicks();
+      }
+      return;
+    }
     if (d.tipo !== "nuevoMensaje") return;
     const m = d.mensaje, mio = m.remitenteId === yo.userId;
     const r = resumen[m.chatId] || { noLeidos: 0 };
-    r.texto = m.texto; r.enviadoEn = m.enviadoEn; r.mio = mio;
+    r.texto = textoVista(m); r.messageId = m.messageId; r.enviadoEn = m.enviadoEn; r.mio = mio;
     if (m.chatId === chatActual) {
       const c = $("mensajes"), cerca = c.scrollHeight - c.scrollTop - c.clientHeight < 160;
       // Remitente desconocido (p. ej. lista de miembros desactualizada): se recarga primero.
@@ -853,7 +1089,16 @@ function conectarWs() {
 }
 
 // ---------------------------------------------------------------- nuevo chat
-function abrirModal() {
+function abrirModal(modo = "nuevo") {
+  modoModal = modo;
+  const agregar = modo === "agregar";
+  const chat = chats.find((c) => c.chatId === chatActual);
+  $("modalTitulo").textContent = agregar ? "Agregar personas" : "Nuevo chat";
+  $("modalSub").textContent = agregar
+    ? `Invita a más personas a «${chat?.nombre || "este chat"}». Verán el historial del chat.`
+    : "Invita a una persona para un chat 1 a 1, o a varias para un grupo.";
+  $("campoNombreChat").classList.toggle("oculto", agregar);
+  $("btnCrear").textContent = agregar ? "Agregar" : "Crear chat";
   correos = [];
   pintarChips();
   $("nombreChat").value = "";
@@ -895,16 +1140,35 @@ function pintarChips() {
   $("nombreChatNota").textContent = grupo ? "(obligatorio para grupos)" : "(opcional)";
   $("nombreChatAyuda").textContent = grupo
     ? "Los grupos necesitan un nombre para reconocerlos."
-    : "Si lo dejas vacío, el chat se llamará como la otra persona.";
+    : "Si lo dejas vacío, el chat se llamará como la otra persona (solo hay uno así por persona y no admite más miembros).";
 }
 
-async function crearChat(e) {
+async function enviarModal(e) {
   e.preventDefault();
   agregarChip();
   if (!correos.length) return avisar("Añade al menos un correo.", "error");
   const malos = correos.filter((c) => !esEmail(c));
   if (malos.length) return avisar("Revisa estos correos: " + malos.join(", "), "error");
+  return modoModal === "agregar" ? agregarMiembros() : crearChat();
+}
 
+async function agregarMiembros() {
+  const chatId = chatActual, boton = $("btnCrear");
+  cargando(boton, true, "Agregando…");
+  try {
+    const r = await api("POST", `/chats/${chatId}/miembros`, { emails: correos });
+    cerrarModal();
+    avisar(r.agregados.length === 1 ? "Persona agregada" : `${r.agregados.length} personas agregadas`, "ok");
+    await Promise.all([cargarChats(), cargarMiembros(chatId)]);
+    if (chatActual === chatId) { actualizarSub(); actualizarTicks(); }
+  } catch (err) {
+    avisar(err.message, "error");
+  } finally {
+    cargando(boton, false);
+  }
+}
+
+async function crearChat() {
   const nombre = $("nombreChat").value.trim();
   if (correos.length > 1 && !nombre) { $("nombreChat").focus(); return avisar("Ponle un nombre al grupo.", "error"); }
   const boton = $("btnCrear");
@@ -912,7 +1176,7 @@ async function crearChat(e) {
   try {
     const chat = await api("POST", "/chats", { nombre, emails: correos });
     cerrarModal();
-    avisar("Chat creado", "ok");
+    avisar(chat.existente ? "Ya tenías un chat con esta persona; te llevo a él." : "Chat creado", "ok");
     await cargarChats();
     abrirChat(chats.find((c) => c.chatId === chat.chatId) || { chatId: chat.chatId, nombre: chat.nombre });
   } catch (err) {
@@ -922,9 +1186,158 @@ async function crearChat(e) {
   }
 }
 
+// ---------------------------------------------------------------- monitoreo
+let timerMon = null;
+const RESUMEN_TXT = { suma: "total última hora", max: "pico", prom: "promedio", ultimo: "ahora" };
+
+function abrirMonitoreo() {
+  $("panelMonitoreo").classList.remove("oculto");
+  cargarMonitoreo();
+  clearInterval(timerMon);
+  timerMon = setInterval(() => { if (!document.hidden) cargarMonitoreo(); }, 60000);
+}
+function cerrarMonitoreo() {
+  clearInterval(timerMon);
+  $("panelMonitoreo").classList.add("oculto");
+  $("tipMon").classList.add("oculto");
+}
+
+function formatoValor(v, unidad) {
+  if (v === null || v === undefined) return { n: "—", u: "" };
+  if (unidad === "ms" && v >= 1000) return { n: (v / 1000).toLocaleString([], { maximumFractionDigits: 1 }), u: "s" };
+  const dec = unidad === "ms" || v >= 100 || Number.isInteger(v) ? 0 : 1;
+  return { n: Number(v).toLocaleString([], { maximumFractionDigits: dec }), u: unidad };
+}
+
+// Mini gráfica de barras (una serie: la última hora en 12 intervalos de 5 min).
+function miniBarras(m, inicio, periodo) {
+  const NS = "http://www.w3.org/2000/svg", W = 240, H = 42, n = m.serie.length, gap = 2;
+  const ancho = (W - gap * (n - 1)) / n;
+  const max = Math.max(...m.serie.map((v) => v || 0), 0);
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", m.etiqueta + ": " + m.serie.map((v, i) =>
+    `${hora(inicio + i * periodo)} ${formatoValor(v, m.unidad).n}`).join(", "));
+  m.serie.forEach((v, i) => {
+    const x = i * (ancho + gap);
+    const g = document.createElementNS(NS, "g");
+    const pista = document.createElementNS(NS, "rect");
+    Object.entries({ x, y: H - 1, width: ancho, height: 1, class: "pista" }).forEach(([k, val]) => pista.setAttribute(k, val));
+    g.appendChild(pista);
+    if (v) {
+      const h = Math.max(2, (v / (max || 1)) * (H - 2));
+      const b = document.createElementNS(NS, "rect");
+      Object.entries({ x, y: H - h, width: ancho, height: h, rx: Math.min(2, ancho / 2), class: "barra" }).forEach(([k, val]) => b.setAttribute(k, val));
+      g.appendChild(b);
+    }
+    // Zona de hover más grande que la barra (toda la columna).
+    const hit = document.createElementNS(NS, "rect");
+    Object.entries({ x: x - gap / 2, y: 0, width: ancho + gap, height: H, class: "hit" }).forEach(([k, val]) => hit.setAttribute(k, val));
+    const desde = inicio + i * periodo, f = formatoValor(v, m.unidad);
+    const texto = `${hora(desde)}–${hora(desde + periodo)} · ${v === null ? "sin datos" : f.n + (f.u ? " " + f.u : "")}`;
+    hit.addEventListener("mousemove", (e) => mostrarTip(e, texto));
+    hit.addEventListener("mouseleave", () => $("tipMon").classList.add("oculto"));
+    g.appendChild(hit);
+    svg.appendChild(g);
+  });
+  return svg;
+}
+
+function mostrarTip(e, texto) {
+  const t = $("tipMon");
+  t.textContent = texto;
+  t.classList.remove("oculto");
+  const x = Math.min(e.clientX + 12, window.innerWidth - t.offsetWidth - 8);
+  t.style.left = x + "px";
+  t.style.top = (e.clientY - 34) + "px";
+}
+
+function pintarCuenta(c) {
+  const sec = document.createElement("section");
+  sec.className = "mon-cuenta";
+  const cab = document.createElement("div");
+  cab.className = "mon-cuenta-cab";
+  const h = document.createElement("h3"); h.textContent = c.titulo;
+  const serv = document.createElement("span"); serv.className = "serv"; serv.textContent = c.servicios;
+  const a = document.createElement("a");
+  a.href = c.dashboard; a.target = "_blank"; a.rel = "noopener";
+  a.textContent = "Dashboard en CloudWatch ↗";
+  a.title = "Ábrelo con la sesión de consola de esta cuenta";
+  cab.append(h, serv, a);
+  sec.appendChild(cab);
+
+  if (c.error) {
+    const e = document.createElement("div"); e.className = "mon-error"; e.textContent = c.error;
+    sec.appendChild(e);
+    return sec;
+  }
+
+  if (c.alarmas?.length) {
+    const al = document.createElement("div");
+    al.className = "mon-alarmas";
+    for (const x of c.alarmas) {
+      const chip = document.createElement("span");
+      const est = x.estado === "ALARM" ? ["alarma", "!", "En alarma"] : x.estado === "OK" ? ["ok", "✓", "OK"] : ["sin", "–", "Sin datos"];
+      chip.className = "estado-alarma " + est[0];
+      chip.title = `${est[2]}: ${x.descripcion}`;
+      chip.innerHTML = `<i aria-hidden="true">${est[1]}</i>`;
+      chip.append(`${x.nombre.replace(/^(identidad|mensajeria|datos)-/, "")} · ${est[2]}`);
+      al.appendChild(chip);
+    }
+    sec.appendChild(al);
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "mon-grid";
+  for (const m of c.metricas) {
+    const t = document.createElement("div");
+    t.className = "mon-tile";
+    const etq = document.createElement("div"); etq.className = "etq"; etq.textContent = m.etiqueta;
+    const f = formatoValor(m.valor, m.unidad);
+    const val = document.createElement("div"); val.className = "val"; val.textContent = f.n;
+    const sm = document.createElement("small"); sm.textContent = [f.u, RESUMEN_TXT[m.resumen]].filter(Boolean).join(" · ");
+    val.appendChild(sm);
+    const ejes = document.createElement("div"); ejes.className = "mon-ejes";
+    ejes.innerHTML = `<span>${hora(c.inicio)}</span><span>ahora</span>`;
+    t.append(etq, val, miniBarras(m, c.inicio, c.periodo), ejes);
+    if (m.ayuda) { const ay = document.createElement("div"); ay.className = "ayuda-m"; ay.textContent = m.ayuda; t.appendChild(ay); }
+    grid.appendChild(t);
+  }
+  sec.appendChild(grid);
+  return sec;
+}
+
+async function cargarMonitoreo() {
+  const boton = $("btnMonActualizar");
+  if (boton.disabled) return;
+  cargando(boton, true, "Actualizando…");
+  try {
+    const r = await api("GET", "/monitoreo");
+    const cont = $("monCuentas");
+    cont.innerHTML = "";
+    cont.style.cssText = "display:flex;flex-direction:column;gap:16px";
+    r.cuentas.forEach((c) => cont.appendChild(pintarCuenta(c)));
+    const enAlarma = r.cuentas.flatMap((c) => c.alarmas || []).filter((x) => x.estado === "ALARM").length;
+    $("monEstado").textContent = `Actualizado a las ${new Date(r.generado).toLocaleTimeString()}` +
+      (enAlarma ? ` · ${enAlarma} alarma${enAlarma > 1 ? "s" : ""} activa${enAlarma > 1 ? "s" : ""}` : " · sin alarmas activas");
+  } catch (e) {
+    $("monEstado").textContent = "No se pudo cargar: " + e.message;
+  } finally {
+    cargando(boton, false);
+  }
+}
+
 // ---------------------------------------------------------------- arranque
 document.addEventListener("visibilitychange", () => { if (!document.hidden && chatActual) marcarLeido(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("modal").classList.contains("oculto")) cerrarModal(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  cerrarMenuChat();
+  if (!$("panelMonitoreo").classList.contains("oculto")) return cerrarMonitoreo();
+  if (!$("modal").classList.contains("oculto")) cerrarModal();
+});
+document.addEventListener("click", (e) => { if (!e.target.closest(".menu-chat")) cerrarMenuChat(); });
 
 if (!C) {
   avisar("Falta config.js. Ejecuta scripts/generar_config.sh después de terraform apply.", "error");

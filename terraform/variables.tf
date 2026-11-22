@@ -44,3 +44,29 @@ variable "auto_confirmar_usuarios" {
   type        = bool
   default     = true
 }
+
+# --- Alertas por Telegram (ver README, sección 4.5) ---
+variable "telegram_bot_token" {
+  description = "Token del bot de Telegram (lo da @BotFather). Vacío = las alertas solo quedan en los logs."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "telegram_chat_id" {
+  description = "Chat (persona o grupo) que recibe las alertas. Se obtiene con scripts/telegram_chat_id.sh."
+  type        = string
+  default     = ""
+}
+
+variable "email_alertas" {
+  description = "Correo opcional suscrito a los temas SNS de las 3 cuentas (llegan 3 correos de confirmación)."
+  type        = string
+  default     = ""
+}
+
+variable "notificar_chats" {
+  description = "Si es true, cada chat o grupo nuevo manda un aviso a Telegram (tema SNS mensajeria-eventos)."
+  type        = bool
+  default     = true
+}

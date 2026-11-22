@@ -11,3 +11,7 @@ output "tablas" {
     conexiones    = aws_dynamodb_table.conexiones.name
   }
 }
+
+output "log_groups" {
+  value = [aws_cloudwatch_log_group.datos_api.name]
+}

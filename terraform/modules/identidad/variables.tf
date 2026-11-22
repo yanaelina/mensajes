@@ -23,3 +23,8 @@ variable "token_interno" {
 variable "lambdas_dir" {
   type = string
 }
+
+variable "topico_alertas_arn" {
+  description = "Tema SNS de alertas de esta cuenta (módulo observabilidad). Las alarmas publican ahí."
+  type        = string
+}

@@ -8,3 +8,9 @@ perfil_datos      = "cuenta-datos"
 # true  = los usuarios quedan confirmados al registrarse (recomendado en Learner Lab)
 # false = Cognito manda un código por email que hay que confirmar
 auto_confirmar_usuarios = true
+
+# Alertas por Telegram (README, sección 4.5). Vacío = sin envío.
+telegram_bot_token = ""   # 123456789:AA...  (de @BotFather)
+telegram_chat_id   = ""   # sale de: scripts/telegram_chat_id.sh <token>
+# email_alertas    = ""   # opcional: también por correo (SNS)
+# notificar_chats  = true  # aviso a Telegram por cada chat o grupo nuevo
